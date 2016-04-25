@@ -1,21 +1,30 @@
 package org.tropic.sparkor.core
 
+import org.apache.spark.SparkContext
 
-class GenericSolver(_pb: Problem = null) extends Solver {
-  private var pb = _pb
+class GenericSolver(_sc: SparkContext = null) extends Solver(_sc) {
+
+  private var pb : Problem = null
   private var solver : Solver = null
 
   def setProblem(_pb : Problem) = {
     pb = _pb
+    solver = pb.generateDefaultSolver()
   }
 
-  protected def cleanupSolving() {}
-
-  protected def getScore: Double = {
-    0.0
+  def getScore: Double = {
+    solver.getScore
   }
 
-  protected def initSolving() {}
+  def _cleanupSolving(): Unit = {
+    solver._cleanupSolving()
+  }
 
-  protected def solveNIters(iterCount: Int) {}
+  def _initSolving(): Unit = {
+    solver._initSolving()
+  }
+
+  def _solveNIters(iterCount: Int): (Int, Solution) = {
+    solver._solveNIters(iterCount)
+  }
 }
