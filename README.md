@@ -27,3 +27,4 @@ Contributing
 
 Documentation
 ===============
+The full Scaladoc is available [here](http://saagie.github.io/spark-or/)
