@@ -8,7 +8,7 @@ object ConstraintType extends Enumeration {
 }
 import ConstraintType._
 
-class LinearOptimizationProblem(_paramA: Vector[Vector[Double]], _paramB: Vector[Double], _paramC: Vector[Double], _constaintType: ConstraintType) extends Problem {
+class LinearOptimizationProblem(_paramA: RDD[Vector[Double]], _paramB: RDD[Double], _paramC: RDD[Double], _constaintType: ConstraintType) extends Problem {
   val paramA = _paramA
   val paramB = _paramB
   val paramC = _paramC
