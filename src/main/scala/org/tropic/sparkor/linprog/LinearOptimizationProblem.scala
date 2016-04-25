@@ -1,5 +1,6 @@
 package org.tropic.sparkor.linprog
 
+import org.apache.spark.rdd.RDD
 import org.tropic.sparkor.core.{Problem, Solver}
 
 object ConstraintType extends Enumeration {
