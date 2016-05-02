@@ -1,6 +1,6 @@
 package org.tropic.sparkor.linprog
 
-import org.apache.spark.mllib.linalg.Matrix
+import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.mllib.linalg.Vector
 import org.tropic.sparkor.core.{Problem, Solver}
 
@@ -27,7 +27,7 @@ import ConstraintType._
   * @param _paramC vector c with m elements
   * @param _constraintType constraint type in Ax [constraintType] b. (=, <= or >=)
   */
-class LinearOptimizationProblem(_paramA: Matrix, _paramB: Vector, _paramC: Vector, _constraintType: ConstraintType) extends Problem {
+class LinearOptimizationProblem(_paramA: RowMatrix, _paramB: Vector, _paramC: Vector, _constraintType: ConstraintType) extends Problem {
   /**
     * n-by-m matrix A parameter of the problem
     */
