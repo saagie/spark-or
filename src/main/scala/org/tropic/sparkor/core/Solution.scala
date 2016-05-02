@@ -1,5 +1,7 @@
 package org.tropic.sparkor.core
 
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+
 /**
   * Represents a solution of a problem
   * @param _value value of the solution
@@ -21,5 +23,14 @@ class Solution(_value: Any = null) {
     */
   def setValue(_value: Any) = {
     value = _value
+  }
+
+  /**
+    * Returns the value as a Spark vector.
+    * @return Value of the solucation, as a Spark Vector.
+    * @throws ClassCastException Thrown if the value of the solution cannot be typecast to a vector.
+    */
+  def getVector() = {
+    value.asInstanceOf[Vector]
   }
 }

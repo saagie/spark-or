@@ -8,19 +8,21 @@ import org.tropic.sparkor.core.Solution
   * @param _sc SparkContext
   */
 class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(_sc) {
-
   /**
     * Solution: solution of the problem
     */
-  var solution: Solution = null
+  private var solution: Solution = null
   private var score: Double = 0
 
   /**
     * Sets an optional initial solution of this linear optimization problem
-    * @param initSol initial solution
+    * @param initSol Initial solution. Its value type must be a Vector[Double] which has the same size as the c vector.
     */
   def setInitialSolution(initSol: Option[Solution] = None): Unit = {
-    solution = initSol.get
+    solution = initSol match {
+      case Some(sol) => sol
+      case None => null
+    }
   }
 
   /**
@@ -39,7 +41,9 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
   /**
     * Initializes the solving process
     */
-  def _initSolving() {}
+  def _initSolving(): Unit = {
+
+  }
 
   /**
     * Solves the problem within iterCount iterations
