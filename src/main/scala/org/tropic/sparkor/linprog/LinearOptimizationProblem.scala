@@ -12,7 +12,7 @@ object ConstraintType extends Enumeration {
   /**
     * Different constraint types
     */
-  val Equal, GreaterThan, LessThan = Value
+  val Equal, GreaterThan = Value
 }
 
 import ConstraintType._
