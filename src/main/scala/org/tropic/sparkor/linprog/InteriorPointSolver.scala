@@ -60,18 +60,20 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
 
     /* A = [A eye(n)] */
     A = new RowMatrix(lpb.paramA.rows.zipWithIndex().map( x => {
-      var a = new Array[Double](n.value.toInt);
-      a(x._2.toInt) = 1.0; // Be carefull with the sign, it depends on the constrain type
+      var a = new Array[Double](n.value.toInt)
+      a(x._2.toInt) = 1.0 // Be carefull with the sign, it depends on the constrain type
       new DenseVector(x._1.toArray ++ a)
     }))
 
     /* c = [c zeros(n) M] */
     c = new DenseVector(lpb.paramC.toArray ++ Array.fill[Double](n.value)(0.0) :+ 1000000000.0)
 
+    /* b = b (No change) */
     b = lpb.paramB
-    val b_broadcast = sc.broadcast(b)
 
-    A = new RowMatrix(A.rows.zipWithIndex().map(x => new DenseVector(x._1.toArray ++ Array(b_broadcast.value.apply(x._2.toInt)-x._1.toArray.sum, 1))))
+    /* A = [A, b-A*ones(n,1), 1] */
+    val b_broadcast = sc.broadcast(b)
+    A = new RowMatrix(A.rows.zipWithIndex().map(x => new DenseVector(x._1.toArray ++ Array(b_broadcast.value.apply(x._2.toInt)-x._1.toArray.sum))))
   }
 
 
