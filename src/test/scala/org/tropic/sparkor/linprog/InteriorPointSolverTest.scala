@@ -3,8 +3,7 @@ package org.tropic.sparkor.linprog
 import org.scalatest._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
-import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.linalg.{DenseVector, DenseMatrix}
 
 class InteriorPointSolverTest extends FlatSpec {
 
@@ -12,7 +11,7 @@ class InteriorPointSolverTest extends FlatSpec {
   val sc = new SparkContext(conf)
 
   "A linear problem with A = [1, 2, 3 ; 1, 2, 3], b = [2, 2], c = [5, 5, 5] " should " with ConstraintType = GreaterThan, be correctly initialized " in  {
-    val paramA = new RowMatrix(sc.parallelize(Array.fill(2)(new DenseVector(Array(1, 2, 3)))))
+    val paramA = new DenseMatrix(2, 3, Array(1.0, 1.0) ++ Array(2.0, 2.0) ++ Array(3.0, 3.0))
     val paramB = new DenseVector(Array(2, 2))
     val paramC = new DenseVector(Array(5, 5, 5))
     
@@ -25,15 +24,21 @@ class InteriorPointSolverTest extends FlatSpec {
     val b = params._2
     val c = params._3
 
-    val AArray = A.rows.collect()
-    assert(AArray(0).equals(new DenseVector(Array(1, 2, 3, -1, 0, -3))))
-    assert(AArray(1).equals(new DenseVector(Array(1, 2, 3, 0, -1, -3))))
+    val AArray = A.toArray
+    println(AArray.mkString(" "))
+    assert(AArray.slice(0, 2).sameElements(Array(1, 1)))
+    assert(AArray.slice(2, 4).sameElements(Array(2, 2)))
+    assert(AArray.slice(4, 6).sameElements(Array(3, 3)))
+    assert(AArray.slice(6, 8).sameElements(Array(-1, 0)))
+    assert(AArray.slice(8, 10).sameElements(Array(0, -1)))
+    assert(AArray.slice(10, 12).sameElements(Array(-3, -3)))
+
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5, 0, 0, 1.0E9))))
   }
 
   it should " with ConstraintType = Equal, be correctly initialized " in  {
-    val paramA = new RowMatrix(sc.parallelize(Array.fill(2)(new DenseVector(Array(1, 2, 3)))))
+    val paramA = new DenseMatrix(2, 3, Array(1.0, 1.0) ++ Array(2.0, 2.0) ++ Array(3.0, 3.0))
     val paramB = new DenseVector(Array(2, 2))
     val paramC = new DenseVector(Array(5, 5, 5))
 
@@ -46,9 +51,13 @@ class InteriorPointSolverTest extends FlatSpec {
     val b = params._2
     val c = params._3
 
-    val AArray = A.rows.collect()
-    assert(AArray(0).equals(new DenseVector(Array(1, 2, 3, -4))))
-    assert(AArray(1).equals(new DenseVector(Array(1, 2, 3, -4))))
+    val AArray = A.toArray
+    println(AArray.mkString(" "))
+    assert(AArray.slice(0, 2).sameElements(Array(1, 1)))
+    assert(AArray.slice(2, 4).sameElements(Array(2, 2)))
+    assert(AArray.slice(4, 6).sameElements(Array(3, 3)))
+    assert(AArray.slice(6, 8).sameElements(Array(-4, -4)))
+
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5, 1.0E9))))
   }

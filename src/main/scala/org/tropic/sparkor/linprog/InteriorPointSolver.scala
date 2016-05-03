@@ -2,10 +2,8 @@ package org.tropic.sparkor.linprog
 
 import org.apache.spark.SparkContext
 import org.tropic.sparkor.core.Solution
-
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
-import org.apache.spark.mllib.linalg.Vector
-import org.apache.spark.mllib.linalg.DenseVector
+import org.apache.spark.mllib.linalg._
+import org.apache.spark.broadcast.Broadcast
 
 /**
   * Solver for linear optimization problems using the interior point method
@@ -18,16 +16,16 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     */
   private var solution: Solution = null
   private var score: Double = 0
-  private var A: RowMatrix = null
-  private var b: Vector = null
-  private var c: Vector = null
+  private var A: Broadcast[Matrix] = null
+  private var b: Broadcast[Vector] = null
+  private var c: Broadcast[Vector] = null
 
   /**
     * Get the initialized parameters of the associated problem. They may be different from the given problem
     *
     * @return tuple with the initialized parameters.
     */
-  def getInitializedParameters : (RowMatrix, Vector, Vector) = {(A, b, c)}
+  def getInitializedParameters : (Matrix, Vector, Vector) = {(A.value, b.value, c.value)}
 
   /**
     * Sets an optional initial solution of this linear optimization problem
@@ -59,31 +57,37 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * Initializes the solving process
     */
   def _initSolving(): Unit = {
-    val n = sc.broadcast(lpb.paramA.numRows().toInt)
+    val n = lpb.paramA.numRows
+    val p = lpb.paramA.numCols
+    var p_tmp = p
+
+    var A_tmp: Array[Double] = null
+    var b_tmp: Array[Double] = null
+    var c_tmp: Array[Double] = null
 
     if (lpb.constraintType == ConstraintType.GreaterThan) {
       /* A = [A eye(n)] */
-      A = new RowMatrix(lpb.paramA.rows.zipWithIndex().map(x => {
-        var a = new Array[Double](n.value.toInt)
-        a(x._2.toInt) = -1.0
-        new DenseVector(x._1.toArray ++ a)
-      }))
+      val ones = Matrices.diag(new DenseVector(Array.fill(n)(-1.0)))
+      A_tmp = lpb.paramA.toArray ++ ones.toArray
+      p_tmp = p_tmp + n
 
       /* c = [c zeros(n) M] */
-      c = new DenseVector(lpb.paramC.toArray ++ Array.fill[Double](n.value)(0.0) :+ 1000000000.0)
+      c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000000.0
 
     } else { // Constraint is Equal
-      A = lpb.paramA
+      A_tmp = lpb.paramA.toArray
       /* c = [c M] */
-      c = new DenseVector(lpb.paramC.toArray :+ 1000000000.0)
+      c_tmp = lpb.paramC.toArray :+ 1000000000.0
     }
 
-    /* b = b (No change) */
-    b = lpb.paramB
-
     /* A = [A, b-A*ones(n,1)] */
-    val b_broadcast = sc.broadcast(b)
-    A = new RowMatrix(A.rows.zipWithIndex().map(x => new DenseVector(x._1.toArray ++ Array(b_broadcast.value.apply(x._2.toInt)-x._1.toArray.sum))))
+    val A_Matrix = new DenseMatrix(n, p_tmp, A_tmp)
+    b_tmp = lpb.paramB.toArray
+    val b_minus_Aones = b_tmp.zip(A_Matrix.multiply(new DenseVector(Array.fill(p_tmp)(1))).toArray).map(x => x._1 - x._2)
+
+    A = sc.broadcast(Matrices.horzcat(Array(A_Matrix, Matrices.dense(n, 1, b_minus_Aones))))
+    b = sc.broadcast(lpb.paramB)
+    c = sc.broadcast(new DenseVector(c_tmp))
   }
 
 
