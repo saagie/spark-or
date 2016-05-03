@@ -22,6 +22,12 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
   private var c: Vector = null
 
   /**
+    * Get the initialized parameters of the associated problem. They may be different from the given problem
+    * @return tuple with the initialized parameters.
+    */
+  def getInitializedParameters : (RowMatrix, Vector, Vector) = {(A, b, c)}
+
+  /**
     * Sets an optional initial solution of this linear optimization problem
     * @param initSol Initial solution. Its value type must be a Vector[Double] which has the same size as the c vector.
     */
@@ -49,8 +55,8 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * Initializes the solving process
     */
   def _initSolving(): Unit = {
-    val n = sc.broadcast(lpb.paramA.numCols.toInt)
-    val p = sc.broadcast(lpb.paramA.numRows.toInt)
+    val n = sc.broadcast(lpb.paramA.numRows().toInt)
+    val p = sc.broadcast(lpb.paramA.numCols().toInt)
 
     /* A = [A eye(n)] */
     A = new RowMatrix(lpb.paramA.rows.zipWithIndex().map( x => {
@@ -58,14 +64,17 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       a(x._2.toInt) = 1.0; // Be carefull with the sign, it depends on the constrain type
       new DenseVector(x._1.toArray ++ a)
     }))
-    
+
     /* c = [c zeros(n) M] */
     c = new DenseVector(lpb.paramC.toArray ++ Array.fill[Double](n.value)(0.0) :+ 1000000000.0)
-    
+
     b = lpb.paramB
-    
-    A = new RowMatrix(A.rows.zipWithIndex().map(x => new DenseVector(x._1.toArray ++ Array(b.apply(x._2.toInt)-x._1.toArray.sum, 1))))
+    val b_broadcast = sc.broadcast(b)
+
+    A = new RowMatrix(A.rows.zipWithIndex().map(x => new DenseVector(x._1.toArray ++ Array(b_broadcast.value.apply(x._2.toInt)-x._1.toArray.sum, 1))))
   }
+
+
 
   /**
     * Solves the problem within iterCount iterations
