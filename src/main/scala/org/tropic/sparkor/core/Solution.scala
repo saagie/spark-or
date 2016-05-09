@@ -1,6 +1,6 @@
 package org.tropic.sparkor.core
 
-import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.mllib.linalg.Vector
 
 /**
   * Represents a solution of a problem

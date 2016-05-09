@@ -1,7 +1,7 @@
 package org.tropic.sparkor.utils
 
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
-import org.apache.spark.mllib.linalg.{Matrices, Vector, Vectors}
+import org.apache.spark.mllib.linalg.{DenseVector, Matrices, Vector, Vectors}
 
 object LinearSystem {
 
@@ -63,6 +63,6 @@ object LinearSystem {
     val bMat = Matrices.dense(b.size, 1, b.toArray)
     val ub = matUtranspose.multiply(bMat).rows.collect
     val z = Vectors.dense((for(i <- ub.indices) yield ub(i)(0) / s(i)).toArray)
-    matV.multiply(z)
+    matV.multiply(z.asInstanceOf[DenseVector])
   }
 }
