@@ -40,14 +40,20 @@ abstract class Solver(_sc: SparkContext = null) {
     */
   def solve(): Unit = {
     _initSolving()
-    solvingStartedCallback(this)
+    if(solvingStartedCallback != null)
+      solvingStartedCallback(this)
     var solution: Solution = null
+    var i = 0
+    solving = true
     while(solving) {
       val (nIter, newSolution) = _solveNIters(iterInterval)
+      i += nIter
       solution = newSolution
-      newSolutionFoundCallback(nIter, solution, this)
+      if(newSolutionFoundCallback != null)
+        newSolutionFoundCallback(i, solution, this)
     }
-    solvingStoppedCallback(solution, this)
+    if(solvingStoppedCallback != null)
+      solvingStoppedCallback(solution, this)
   }
 
   /**
