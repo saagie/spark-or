@@ -1,10 +1,9 @@
-import org.apache.spark.mllib.random.RandomRDDs._
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
-import org.apache.spark.mllib.linalg.{DenseMatrix, Matrices, Matrix, SingularValueDecomposition, Vector, Vectors}
-import org.apache.spark.rdd.RDD
+package org.tropic.sparkor.utils
 
-object LinearSystem extends App {
+import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Matrices, Vector, Vectors}
+
+object LinearSystem {
 
   def multiplyVector(colU :Vector, b : Vector ): Double ={
     var res = 0.0
@@ -22,12 +21,6 @@ object LinearSystem extends App {
     val sArray = s.toArray
     val resu = for (x<-0 to size-1) yield 1/sArray(x) * ub(x)
     Vectors.dense(resu.toArray)
-  }
-  def toRDD(m: Matrix, sc : SparkContext): RDD[Vector] = {
-    val columns = m.toArray.grouped(m.numRows)
-    val rows = columns.toSeq.transpose // Skip this if you want a column-major RDD.
-    val vectors = rows.map(row => Vectors.dense(row.toArray))
-    sc.parallelize(vectors)
   }
 
   def printTime[R](block: => R): R = {
