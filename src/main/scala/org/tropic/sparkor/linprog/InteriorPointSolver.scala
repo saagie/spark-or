@@ -20,6 +20,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
   private var A: Broadcast[Matrix] = null
   private var b: Broadcast[Vector] = null
   private var c: Broadcast[Vector] = null
+  private var x: Vector = null
 
   /**
     * Get the initialized parameters of the associated problem. They may be different from the given problem
@@ -32,6 +33,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * Sets an optional initial solution of this linear optimization problem
     *
     * @param initSol Initial solution. Its value type must be a Vector[Double] which has the same size as the c vector.
+    * @note The initial solution must respect the problem's constraints. Otherwise, there will be an undefined behaviour in the resolution.
     */
   def setInitialSolution(initSol: Option[Solution] = None): Unit = {
     solution = initSol match {
@@ -58,39 +60,41 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * Initializes the solving process
     */
   def _initSolving(): Unit = {
-      val n = lpb.paramA.numRows
-      val p = lpb.paramA.numCols
-      var p_tmp = p
+    val n = lpb.paramA.numRows
+    val p = lpb.paramA.numCols
+    var p_tmp = p
 
-      var A_tmp: Array[Double] = null
-      var b_tmp: Array[Double] = null
-      var c_tmp: Array[Double] = null
+    var A_tmp: Array[Double] = null
+    var b_tmp: Array[Double] = null
+    var c_tmp: Array[Double] = null
 
-      if (lpb.constraintType == ConstraintType.GreaterThan) {
-        /* A = [A eye(n)] */
-        val ones = Matrices.diag(new DenseVector(Array.fill(n)(-1.0)))
-        A_tmp = lpb.paramA.toArray ++ ones.toArray
-        p_tmp = p_tmp + n
+    if (lpb.constraintType == ConstraintType.GreaterThan) {
+      /* A = [A eye(n)] */
+      val ones = Matrices.diag(new DenseVector(Array.fill(n)(-1.0)))
+      A_tmp = lpb.paramA.toArray ++ ones.toArray
+      p_tmp = p_tmp + n
 
-        if (!hasInitSol) {
-          /* c = [c zeros(n) M] */
-          c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000000.0
-        } else {
-          /* c = [c zeros(n)] */
-          c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
-        }
-
+      if (!hasInitSol) {
+        /* c = [c zeros(n) M] */
+        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000000.0
+        x = new DenseVector(Array.fill(n+p)(1))
       } else {
-        // Constraint is Equal
-        A_tmp = lpb.paramA.toArray
-        if (!hasInitSol) {
-          /* c = [c M] */
-          c_tmp = lpb.paramC.toArray :+ 1000000000.0
-        } else {
-          /* c = [c] */
-          c_tmp = lpb.paramC.toArray
-        }
+        /* c = [c zeros(n)] */
+        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
       }
+
+    } else {
+      // Constraint is Equal
+      A_tmp = lpb.paramA.toArray
+      if (!hasInitSol) {
+        /* c = [c M] */
+        c_tmp = lpb.paramC.toArray :+ 1000000000.0
+        x = new DenseVector(Array.fill(p)(1))
+      } else {
+        /* c = [c] */
+        c_tmp = lpb.paramC.toArray
+      }
+    }
 
     if (!hasInitSol) {
       /* A = [A, b-A*ones(n,1)] */
@@ -102,20 +106,20 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       A = sc.broadcast(new DenseMatrix(n, p_tmp, A_tmp))
     }
 
+    b = sc.broadcast(lpb.paramB)
+    c = sc.broadcast(new DenseVector(c_tmp))
+    
+}
 
-      b = sc.broadcast(lpb.paramB)
-      c = sc.broadcast(new DenseVector(c_tmp))
-  }
 
 
-
-  /**
-    * Solves the problem within iterCount iterations
-    *
-    * @param iterCount number of maximum iterations
-    * @return Tuple (number of iterations to solve the problem, solution found)
-    */
-  def _solveNIters(iterCount: Int): (Int, Solution) = {
-    (0, new Solution())
-  }
+/**
+  * Solves the problem within iterCount iterations
+  *
+  * @param iterCount number of maximum iterations
+  * @return Tuple (number of iterations to solve the problem, solution found)
+  */
+def _solveNIters(iterCount: Int): (Int, Solution) = {
+  (0, new Solution())
+}
 }
