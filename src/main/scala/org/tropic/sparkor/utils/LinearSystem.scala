@@ -1,4 +1,5 @@
-import org.apache.spark.mllib.random.RandomRDDs._
+package org.tropic.sparkor.utils
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.mllib.linalg.{DenseMatrix, Matrices, Matrix, SingularValueDecomposition, Vector, Vectors}
@@ -57,6 +58,7 @@ object LinearSystem extends App {
       .map(buildRow) // restore order of elements in each row and remove column indexes
     new RowMatrix(transposedRowsRDD)
   }
+
   def solveLinearSystem(A : RowMatrix, b: Vector): Vector = {
     val svd = A.computeSVD(A.numCols.toInt, computeU = true)
     val matU = svd.U
@@ -68,7 +70,4 @@ object LinearSystem extends App {
     val z = Vectors.dense((for(i <- ub.indices) yield ub(i)(0) / s(i)).toArray)
     matV.multiply(z)
   }
-
-
-
 }
