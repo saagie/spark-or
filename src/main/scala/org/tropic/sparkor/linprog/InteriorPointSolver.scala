@@ -37,6 +37,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * Sets an optional initial solution of this linear optimization problem
     *
     * @param initSol Initial solution. Its value type must be a Vector[Double] which has the same size as the c vector.
+    * @note The initial solution must respect the problem's constraints. Otherwise, there will be an undefined behaviour in the resolution.
     */
   def setInitialSolution(initSol: Option[Solution] = None): Unit = {
     solution = initSol match {
@@ -80,9 +81,11 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       if (!hasInitSol) {
         /* c = [c zeros(n) M] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000000.0
+        x = new DenseVector(Array.fill(n+p)(1))
       } else {
         /* c = [c zeros(n)] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
+        val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector.toDense.asInstanceOf[DenseVector]).toArray).map(x => x._1 - x._2)
       }
 
     } else {
@@ -91,9 +94,11 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       if (!hasInitSol) {
         /* c = [c M] */
         c_tmp = lpb.paramC.toArray :+ 1000000000.0
+        x = new DenseVector(Array.fill(p)(1))
       } else {
         /* c = [c] */
         c_tmp = lpb.paramC.toArray
+        x = solution.getVector
       }
     }
 
