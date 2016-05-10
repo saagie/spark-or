@@ -1,22 +1,16 @@
 package org.tropic.sparkor.utils
 
-
-import breeze.linalg.Matrix
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.rdd.RDD
 import org.scalatest._
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
-import org.apache.spark.mllib.linalg.{Vectors, Vector}
-
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.tropic.sparkor.TestUtils
 
 /**
   * Created by etienne & vincent on 09/05/16.
   */
 class LinearSystemTest extends FlatSpec {
-
-  val conf = new SparkConf().setAppName("Linear system solving test").setMaster("local[*]")
-  val sc = new SparkContext(conf)
+  val sc = TestUtils.sc
 
   "A linear system with A = [1, 2, 3 ; 2, 3, 7; 7, 5, 1], b = [14, 29, 20] " should " x = [1, 2, 3] " in  {
     val features1 = Vectors.dense(Array(1.0,2.0,3.0))
@@ -56,7 +50,5 @@ class LinearSystemTest extends FlatSpec {
     assert(matCollect(0)(0) * xCollect(0) + matCollect(0)(1) * xCollect(1) + matCollect(0)(2) * xCollect(2) - b(0) < 10e-8)
     assert(matCollect(1)(0) * xCollect(0) + matCollect(1)(1) * xCollect(1) + matCollect(1)(2) * xCollect(2) - b(1) < 10e-8)
     assert(matCollect(2)(0) * xCollect(0) + matCollect(2)(1) * xCollect(1) + matCollect(2)(2) * xCollect(2) - b(2) < 10e-8)
-
   }
-
 }

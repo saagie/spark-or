@@ -30,7 +30,7 @@ class Solution(_value: Any = null) {
     * @return Value of the solucation, as a Spark Vector.
     * @throws ClassCastException Thrown if the value of the solution cannot be typecast to a vector.
     */
-  def getVector() = {
+  def getVector(): Vector = {
     value.asInstanceOf[Vector]
   }
 }

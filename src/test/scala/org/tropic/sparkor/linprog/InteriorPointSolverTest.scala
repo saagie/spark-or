@@ -1,15 +1,13 @@
 package org.tropic.sparkor.linprog
 
 import org.scalatest._
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
-import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector}
+import org.tropic.sparkor.TestUtils
+import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Vectors}
 import org.tropic.sparkor.core.Solution
 
 class InteriorPointSolverTest extends FlatSpec {
 
-  val conf = new SparkConf().setAppName("Initialization test").setMaster("local[*]")
-  val sc = new SparkContext(conf)
+  val sc = TestUtils.sc
 
   "A linear problem with A = [1, 2, 3 ; 1, 2, 3], b = [2, 2], c = [5, 5, 5] " should " with ConstraintType = GreaterThan, be correctly initialized " in  {
     val paramA = new DenseMatrix(2, 3, Array(1.0, 1.0) ++ Array(2.0, 2.0) ++ Array(3.0, 3.0))
@@ -68,7 +66,7 @@ class InteriorPointSolverTest extends FlatSpec {
     val paramB = new DenseVector(Array(2, 2))
     val paramC = new DenseVector(Array(5, 5, 5))
 
-    val sol = new Solution(5)
+    val sol = new Solution(Vectors.dense(Array[Double](5, 4, 3)))
     val solver = new InteriorPointSolver(sc)
     val pb = new LinearOptimizationProblem(paramA, paramB, paramC, ConstraintType.GreaterThan)
     solver.setProblem(pb)
@@ -96,7 +94,7 @@ class InteriorPointSolverTest extends FlatSpec {
     val paramB = new DenseVector(Array(2, 2))
     val paramC = new DenseVector(Array(5, 5, 5))
 
-    val sol = new Solution(5)
+    val sol = new Solution(Vectors.dense(Array[Double](5, 4, 3)))
     val solver = new InteriorPointSolver(sc)
     val pb = new LinearOptimizationProblem(paramA, paramB, paramC, ConstraintType.Equal)
     solver.setProblem(pb)

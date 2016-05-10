@@ -81,6 +81,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       } else {
         /* c = [c zeros(n)] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
+        val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector().toDense.asInstanceOf[DenseVector]).toArray).map(x => x._1 - x._2)
       }
 
     } else {
@@ -93,6 +94,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       } else {
         /* c = [c] */
         c_tmp = lpb.paramC.toArray
+        x = solution.getVector()
       }
     }
 
