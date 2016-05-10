@@ -107,7 +107,7 @@ class InteriorPointSolverTest extends FlatSpec {
     /* assert A*x = b */
     val Ax = A.multiply(x)
     val norm = (Ax.toArray.zip(b.toArray).map(x => x._1-x._2)).reduce((x1, x2) => x1+ x2)
-    //println("**** "+norm+" *************************")
+    assert(norm<0.0001)
   }
 
   it should " with ConstraintType = Equal and an initial solution, be correctly initialized " in  {
@@ -115,7 +115,7 @@ class InteriorPointSolverTest extends FlatSpec {
     val paramB = new DenseVector(Array(2, 2))
     val paramC = new DenseVector(Array(5, 5, 5))
 
-    val sol = new Solution(Vectors.dense(Array[Double](5, 4, 3)))
+    val sol = new Solution(Vectors.dense(Array[Double](0.14286, 0.28571, 0.42857)))
     val solver = new InteriorPointSolver(sc)
     val pb = new LinearOptimizationProblem(paramA, paramB, paramC, ConstraintType.Equal)
     solver.setProblem(pb)
@@ -125,6 +125,8 @@ class InteriorPointSolverTest extends FlatSpec {
     val A = params._1
     val b = params._2
     val c = params._3
+    val x = params._4
+
 
     val AArray = A.toArray
     println(AArray.mkString(" "))
@@ -134,5 +136,10 @@ class InteriorPointSolverTest extends FlatSpec {
 
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5))))
+
+    /* assert A*x = b */
+    val Ax = A.multiply(x)
+    val norm = (Ax.toArray.zip(b.toArray).map(x => x._1-x._2)).reduce((x1, x2) => x1+ x2)
+    assert(norm<0.0001)
   }
 }
