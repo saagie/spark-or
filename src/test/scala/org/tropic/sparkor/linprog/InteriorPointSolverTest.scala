@@ -18,10 +18,11 @@ class InteriorPointSolverTest extends FlatSpec {
     val pb = new LinearOptimizationProblem(paramA, paramB, paramC, ConstraintType.GreaterThan)
     solver.setProblem(pb)
     solver._initSolving()
-    val params = solver.getInitializedParameters
+    val params = solver._getInternParameters
     val A = params._1
     val b = params._2
     val c = params._3
+    val x = params._4
 
     val AArray = A.toArray
     println(AArray.mkString(" "))
@@ -34,6 +35,13 @@ class InteriorPointSolverTest extends FlatSpec {
 
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5, 0, 0, 1.0E9))))
+
+    /* assert A*x = b */
+    val Ax = A.multiply(x)
+    //assert(b.equals(Ax))
+    val norm = (Ax.toArray.zip(b.toArray).map(x => x._1-x._2)).reduce((x1, x2) => x1+ x2)
+    assert(norm<0.0001)
+
   }
 
   it should " with ConstraintType = Equal, be correctly initialized " in  {
@@ -45,10 +53,11 @@ class InteriorPointSolverTest extends FlatSpec {
     val pb = new LinearOptimizationProblem(paramA, paramB, paramC, ConstraintType.Equal)
     solver.setProblem(pb)
     solver._initSolving()
-    val params = solver.getInitializedParameters
+    val params = solver._getInternParameters
     val A = params._1
     val b = params._2
     val c = params._3
+    val x = params._4
 
     val AArray = A.toArray
     println(AArray.mkString(" "))
@@ -59,6 +68,12 @@ class InteriorPointSolverTest extends FlatSpec {
 
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5, 1.0E9))))
+
+    /* assert A*x = b */
+    val Ax = A.multiply(x)
+    //assert(b.equals(Ax))
+    val norm = (Ax.toArray.zip(b.toArray).map(x => x._1-x._2)).reduce((x1, x2) => x1+ x2)
+    assert(norm<0.0001)
   }
 
   it should " with ConstraintType = GreaterThan and an initial solution, be correctly initialized " in  {
@@ -72,10 +87,11 @@ class InteriorPointSolverTest extends FlatSpec {
     solver.setProblem(pb)
     solver.setInitialSolution(Some(sol))
     solver._initSolving()
-    val params = solver.getInitializedParameters
+    val params = solver._getInternParameters
     val A = params._1
     val b = params._2
     val c = params._3
+    val x = params._4
 
     val AArray = A.toArray
     println(AArray.mkString(" "))
@@ -87,6 +103,11 @@ class InteriorPointSolverTest extends FlatSpec {
 
     assert(b.equals(new DenseVector(Array(2, 2))))
     assert(c.equals(new DenseVector(Array(5, 5, 5, 0, 0))))
+
+    /* assert A*x = b */
+    val Ax = A.multiply(x)
+    val norm = (Ax.toArray.zip(b.toArray).map(x => x._1-x._2)).reduce((x1, x2) => x1+ x2)
+    //println("**** "+norm+" *************************")
   }
 
   it should " with ConstraintType = Equal and an initial solution, be correctly initialized " in  {
@@ -100,7 +121,7 @@ class InteriorPointSolverTest extends FlatSpec {
     solver.setProblem(pb)
     solver.setInitialSolution(Some(sol))
     solver._initSolving()
-    val params = solver.getInitializedParameters
+    val params = solver._getInternParameters
     val A = params._1
     val b = params._2
     val c = params._3
