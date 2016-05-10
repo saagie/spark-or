@@ -27,4 +27,17 @@ object VectorUtils {
         return false
     true
   }
+
+  /**
+    * Returns the minimum value in the vector
+    * @param v Vector
+    * @return minimum value of this vector
+    */
+  def minValue(v: Vector): Double = {
+    var minVal = v(0)
+    for (i <- 1 until v.size)
+      if (v(i) < minVal)
+        minVal = v(i)
+    minVal
+  }
 }

@@ -139,12 +139,8 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     while (isSolving && iterCount < maxIter) {
       /* X2 = x^2 */
       val X2 = Vectors.dense((for (i <- 0 until m) yield x(i) * x(i)).toArray)
-      /* AX2buf = A * x^2 */
-      val AX2buf = ArrayBuffer.fill[Double](n * m)(0.0)
-      for (row <- 0 until n)
-        for (col <- 0 until m)
-          AX2buf(row * m + col) = X2(col) * A.value(row, col)
-      val AX2 = Matrices.dense(n, m, AX2buf.toArray)
+      /* AX2 = A * x^2 */
+      val AX2 = MatrixUtils.diagMult(A.value, X2)
       val At: DenseMatrix = A.value.transpose.asInstanceOf[DenseMatrix]
       /* mult = A * Xk2 * A' */
       val mult = AX2.multiply(At)
@@ -158,32 +154,36 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       println("size tmp2 : " + tmp2.size)*/
 
       val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(mult, sc)), AX2.multiply(c.value))
-      val Aw = At.multiply(w.asInstanceOf[DenseVector])
-      val r = for (i <- 0 until m) yield c.value(i) - Aw(i)
-
-      val dy = Vectors.dense((for (i <- 0 until m) yield -x(i) * r(i)).toArray)
-      val norm = Vectors.norm(dy, 2.0)
-
-      if (VectorUtils.allPositive(r) && norm <= epsStop)
-        println("STOP: Stop criterion OK")
+      if (w == null) {
+        println("Descent direction too small, converged.")
+        stopSolving()
+      }
       else {
-        if (VectorUtils.allPositive(dy)) {
-          println("ERROR: Unbounded")
-          stopSolving()
-        }
-        else if (norm <= eps) {
-          println("STOP: Too little step")
+        val Aw = At.multiply(w.asInstanceOf[DenseVector])
+        val r = for (i <- 0 until m) yield c.value(i) - Aw(i)
+
+        val dy = Vectors.dense((for (i <- 0 until m) yield -x(i) * r(i)).toArray)
+        val norm = Vectors.norm(dy, 2.0)
+
+        if (VectorUtils.allPositive(r) && norm <= epsStop) {
+          println("STOP: Stop criterion OK")
           stopSolving()
         }
         else {
-          var minDy = dy(0)
-          for (i <- 1 until dy.size) {
-            if (dy(i) < minDy)
-              minDy = dy(i)
+          if (VectorUtils.allPositive(dy)) {
+            println("ERROR: Unbounded")
+            stopSolving()
           }
-          val step = -stepCoef / minDy
-          x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
-          iterCount += 1
+          else if (norm <= eps) {
+            println("STOP: Too little step")
+            stopSolving()
+          }
+          else {
+            var minDy = VectorUtils.minValue(dy)
+            val step = -stepCoef / minDy
+            x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
+            iterCount += 1
+          }
         }
       }
     }
