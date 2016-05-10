@@ -133,12 +133,8 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     while (isSolving && iterCount < maxIter) {
       /* X2 = x^2 */
       val X2 = Vectors.dense((for (i <- 0 until m) yield x(i) * x(i)).toArray)
-      /* AX2buf = A * x^2 */
-      val AX2buf = ArrayBuffer.fill[Double](n * m)(0.0)
-      for (row <- 0 until n)
-        for (col <- 0 until m)
-          AX2buf(row * m + col) = X2(col) * A.value(row, col)
-      val AX2 = Matrices.dense(n, m, AX2buf.toArray)
+      /* AX2 = A * x^2 */
+      val AX2 = MatrixUtils.diagMult(A.value, X2)
       val At: DenseMatrix = A.value.transpose.asInstanceOf[DenseMatrix]
       /* mult = A * Xk2 * A' */
       val mult = AX2.multiply(At)
@@ -170,11 +166,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
           stopSolving()
         }
         else {
-          var minDy = dy(0)
-          for (i <- 1 until dy.size) {
-            if (dy(i) < minDy)
-              minDy = dy(i)
-          }
+          var minDy = VectorUtils.minValue(dy)
           val step = -stepCoef / minDy
           x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
           iterCount += 1
