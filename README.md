@@ -12,6 +12,20 @@ In contains a lot of information including :
 
 ## Getting started
 
+SparkOR is build on Apache Spark (https://github.com/apache/spark) in Scala and aims to solve optimization problems. It uses Spark 1.6.1 and Mllib 1.6.1 to distribute calculations.
+
+### Installation
+
+You can download this repository and run sbt to get the jar package.
+```
+$ sbt package
+```
+You need Spark 1.6.1 correctly installed on your computer and then you can use the library in your project.
+
+### How to use it
+
+You can find some examples on the next section and if you want to improve the library by contributing please find further information on the wiki.
+
 ## Examples
 Examples can be found on the [wiki](https://github.com/saagie/spark-or/wiki/Examples).
 
