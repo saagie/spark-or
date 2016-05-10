@@ -30,6 +30,7 @@ object LinearSystem {
 
   /**
     * solve the problem Ax=b where A as a matrix and b as a vector are the parameters and x as a vector is the solution.
+    *
     * @param A features matrix A of the problem
     * @param b Labels Vector b of the problem
     * @return x the solution of the problem
@@ -39,10 +40,16 @@ object LinearSystem {
     val matU = svd.U
     val s = svd.s // The singular values are stored in a local dense vector.
     val matV = svd.V // The V factor is a local dense matrix.
-    val matUtranspose = transposeRowMatrix(matU)
-    val bMat = Matrices.dense(b.size, 1, b.toArray)
-    val ub = matUtranspose.multiply(bMat).rows.collect
-    val z = Vectors.dense((for(i <- ub.indices) yield ub(i)(0) / s(i)).toArray)
-    matV.multiply(z)
+    val result = s.size match {
+      case 0 => null
+      case _ => {
+        val matUtranspose = transposeRowMatrix(matU)
+        val bMat = Matrices.dense(b.size, 1, b.toArray)
+        val ub = matUtranspose.multiply(bMat).rows.collect
+        val z = Vectors.dense((for (i <- ub.indices) yield ub(i)(0) / s(i)).toArray)
+        matV.multiply(z)
+      }
+    }
+    result
   }
 }
