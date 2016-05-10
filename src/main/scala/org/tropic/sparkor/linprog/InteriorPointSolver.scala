@@ -154,28 +154,36 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       println("size tmp2 : " + tmp2.size)*/
 
       val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(mult, sc)), AX2.multiply(c.value))
-      val Aw = At.multiply(w.asInstanceOf[DenseVector])
-      val r = for (i <- 0 until m) yield c.value(i) - Aw(i)
-
-      val dy = Vectors.dense((for (i <- 0 until m) yield -x(i) * r(i)).toArray)
-      val norm = Vectors.norm(dy, 2.0)
-
-      if (VectorUtils.allPositive(r) && norm <= epsStop)
-        println("STOP: Stop criterion OK")
+      if (w == null) {
+        println("Descent direction too small, converged.")
+        stopSolving()
+      }
       else {
-        if (VectorUtils.allPositive(dy)) {
-          println("ERROR: Unbounded")
-          stopSolving()
-        }
-        else if (norm <= eps) {
-          println("STOP: Too little step")
+        val Aw = At.multiply(w.asInstanceOf[DenseVector])
+        val r = for (i <- 0 until m) yield c.value(i) - Aw(i)
+
+        val dy = Vectors.dense((for (i <- 0 until m) yield -x(i) * r(i)).toArray)
+        val norm = Vectors.norm(dy, 2.0)
+
+        if (VectorUtils.allPositive(r) && norm <= epsStop) {
+          println("STOP: Stop criterion OK")
           stopSolving()
         }
         else {
-          var minDy = VectorUtils.minValue(dy)
-          val step = -stepCoef / minDy
-          x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
-          iterCount += 1
+          if (VectorUtils.allPositive(dy)) {
+            println("ERROR: Unbounded")
+            stopSolving()
+          }
+          else if (norm <= eps) {
+            println("STOP: Too little step")
+            stopSolving()
+          }
+          else {
+            var minDy = VectorUtils.minValue(dy)
+            val step = -stepCoef / minDy
+            x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
+            iterCount += 1
+          }
         }
       }
     }
