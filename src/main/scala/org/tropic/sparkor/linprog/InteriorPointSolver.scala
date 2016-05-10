@@ -31,7 +31,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     *
     * @return tuple with the initialized parameters.
     */
-  def getInitializedParameters : (Matrix, Vector, Vector) = {(A.value, b.value, c.value)}
+  def _getInternParameters : (Matrix, Vector, Vector, Vector) = {(A.value, b.value, c.value, x)}
 
   /**
     * Sets an optional initial solution of this linear optimization problem
@@ -81,11 +81,12 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       if (!hasInitSol) {
         /* c = [c zeros(n) M] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000000.0
-        x = new DenseVector(Array.fill(n+p)(1))
+        x = new DenseVector(Array.fill(n+p+1)(1))
       } else {
         /* c = [c zeros(n)] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
         val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector.toDense.asInstanceOf[DenseVector]).toArray).map(x => x._1 - x._2)
+        x = new DenseVector(solution.getVector.toArray ++ b_minus_Ax)
       }
 
     } else {
@@ -94,7 +95,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       if (!hasInitSol) {
         /* c = [c M] */
         c_tmp = lpb.paramC.toArray :+ 1000000000.0
-        x = new DenseVector(Array.fill(p)(1))
+        x = new DenseVector(Array.fill(p+1)(1))
       } else {
         /* c = [c] */
         c_tmp = lpb.paramC.toArray
