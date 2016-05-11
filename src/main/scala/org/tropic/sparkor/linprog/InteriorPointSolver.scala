@@ -149,7 +149,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       // print
       println("\nX2 \n" + X2)
       println("\nAX2 \n" + AX2)
-      println("\nmult \n" + mult)
+      println("\nmult \n" + ax2at)
 
 
       val breezeAx2at = new breeze.linalg.DenseMatrix(ax2at.numRows, ax2at.numCols, ax2at.toArray)

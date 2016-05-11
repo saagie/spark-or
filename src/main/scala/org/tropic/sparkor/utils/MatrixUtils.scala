@@ -48,7 +48,7 @@ object MatrixUtils {
     val resBuf = ArrayBuffer.fill[Double](n * m)(0.0)
     for (row <- 0 until n)
       for (col <- 0 until m)
-        resBuf(row * m + col) = d(col) * A(row, col)
+        resBuf(row + col * n) = d(col) * A(row, col)
     // res = A * d
     Matrices.dense(n, m, resBuf.toArray)
   }
