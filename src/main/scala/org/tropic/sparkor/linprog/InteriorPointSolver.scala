@@ -131,6 +131,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     val n = A.value.numRows
     val m = A.value.numCols
 
+    println(A.value)
     val epsStop = 0.000001
     val eps = 0.000001
     val stepCoef = 0.99
@@ -145,13 +146,11 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
       /* mult = A * Xk2 * A' */
       val mult = AX2.multiply(At)
 
-      /* w = (A * Xk2 * A') \ (A * Xk2 * c) */
-      /*val rdd = MatrixUtils.matrixToRDD(mult, sc)
-      println("rdd = null : " + (rdd == null))
-      val tmp = new RowMatrix(rdd)
-      println("size tmp : " + tmp.numRows() + ", " + tmp.numCols())
-      val tmp2 = AX2.multiply(c.value)
-      println("size tmp2 : " + tmp2.size)*/
+      // print
+      println("\nX2 \n" + X2)
+      println("\nAX2 \n" + AX2)
+      println("\nmult \n" + mult)
+
 
       val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(mult, sc)), AX2.multiply(c.value))
       if (w == null) {
