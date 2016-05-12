@@ -25,6 +25,9 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
   private var b: Broadcast[Vector] = null
   private var c: Broadcast[Vector] = null
   private var x: Vector = null
+  private val M: Double = 1e9
+  private var epsilon: Double = 0
+  private val Mepsilon: Double = 1e-5
 
   /**
     * Get the initialized parameters of the associated problem. They may be different from the given problem
@@ -52,7 +55,14 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     * @return score of the solution
     */
   def getScore: Double = {
-    VectorUtils.dotProduct(c.value, x)
+    if(VectorUtils.allPositive(x)) {
+      score = VectorUtils.dotProduct(lpb.paramC, x)
+      if (x(x.size - 1) > Mepsilon)
+        score = score + x(x.size - 1) * M
+    }
+    else
+      score = Double.PositiveInfinity
+    score
   }
 
   /**
@@ -80,12 +90,12 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
 
       if (!hasInitSol) {
         /* c = [c zeros(n) M] */
-        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ 1000000.0
+        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ M
         x = new DenseVector(Array.fill(n+p+1)(1))
       } else {
         /* c = [c zeros(n)] */
         c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
-        val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector.toDense.asInstanceOf[DenseVector]).toArray).map(x => x._1 - x._2)
+        val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector.toDense).toArray).map(x => x._1 - x._2)
         x = new DenseVector(solution.getVector.toArray ++ b_minus_Ax)
       }
 
@@ -94,7 +104,7 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
       A_tmp = lpb.paramA.toArray
       if (!hasInitSol) {
         /* c = [c M] */
-        c_tmp = lpb.paramC.toArray :+ 1000000000.0
+        c_tmp = lpb.paramC.toArray :+ M
         x = new DenseVector(Array.fill(p+1)(1))
       } else {
         /* c = [c] */
@@ -131,8 +141,8 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     val n = A.value.numRows
     val m = A.value.numCols
 
-    val epsStop = 0.000001
-    val eps = 0.000001
+    val epsStop = 1e-6
+    val eps = 1e-6
     val stepCoef = 0.99
     var iterCount = 0
 
