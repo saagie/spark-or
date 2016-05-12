@@ -40,4 +40,19 @@ object VectorUtils {
         minVal = v(i)
     minVal
   }
+
+  /**
+    * Dot product of two vectors
+    * @param v First vector
+    * @param u Second vector
+    * @return product of v and u
+    */
+  def dotProduct(v: Vector, u: Vector): Double = {
+    var sum = 0.0
+    //TODO: assert same size?
+    //TODO: change with map function
+    for (i <- 0 until v.size)
+      sum += v(i) * u(i)
+    sum
+  }
 }

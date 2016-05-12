@@ -52,7 +52,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     * @return score of the solution
     */
   def getScore: Double = {
-    score
+    VectorUtils.dotProduct(c.value, x)
   }
 
   /**
