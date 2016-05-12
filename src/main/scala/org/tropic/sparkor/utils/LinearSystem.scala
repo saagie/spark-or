@@ -31,23 +31,23 @@ object LinearSystem {
   /**
     * solve the problem Ax=b where A as a matrix and b as a vector are the parameters and x as a vector is the solution.
     *
-    * @param A features matrix A of the problem
-    * @param b Labels Vector b of the problem
+    * @param matA features matrix A of the problem
+    * @param vectB Labels Vector b of the problem
     * @return x the solution of the problem
     */
-  def solveLinearSystem(A : RowMatrix, b: Vector): Vector = {
-    val svd = A.computeSVD(A.numCols.toInt, computeU = true)
+  def solveLinearSystem(matA : RowMatrix, vectB: Vector): Vector = {
+    val svd = matA.computeSVD(matA.numCols.toInt, computeU = true)
     val matU = svd.U
-    val s = svd.s // The singular values are stored in a local dense vector.
+    val matS = svd.s // The singular values are stored in a local dense vector.
     val matV = svd.V // The V factor is a local dense matrix.
     //TODO: remove null?
-    val result = s.size match {
+    val result = matS.size match {
       case 0 => null
       case _ => {
         val matUtranspose = transposeRowMatrix(matU)
-        val bMat = Matrices.dense(b.size, 1, b.toArray)
-        val ub = matUtranspose.multiply(bMat).rows.collect
-        val z = Vectors.dense((for (i <- ub.indices) yield ub(i)(0) / s(i)).toArray)
+        val matB = Matrices.dense(vectB.size, 1, vectB.toArray)
+        val vectUB = matUtranspose.multiply(matB).rows.collect
+        val z = Vectors.dense((for (i <- vectUB.indices) yield vectUB(i)(0) / matS(i)).toArray)
         matV.multiply(z)
       }
     }

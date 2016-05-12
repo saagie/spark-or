@@ -21,10 +21,10 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
   private var hasInitSol: Boolean = false
   private var solution: Solution = new Solution()
   private var score: Double = 0
-  private var A: Broadcast[Matrix] = null
-  private var b: Broadcast[Vector] = null
-  private var c: Broadcast[Vector] = null
-  private var x: Vector = null
+  private var matA: Broadcast[Matrix] = null
+  private var vectB: Broadcast[Vector] = null
+  private var vectC: Broadcast[Vector] = null
+  private var vectX: Vector = null
   private val M: Double = 1e9
   private var epsilon: Double = 0
   private val Mepsilon: Double = 1e-5
@@ -34,7 +34,7 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     *
     * @return tuple with the initialized parameters.
     */
-  def _getInternParameters : (Matrix, Vector, Vector, Vector) = {(A.value, b.value, c.value, x)}
+  def _getInternParameters : (Matrix, Vector, Vector, Vector) = {(matA.value, vectB.value, vectC.value, vectX)}
 
   /**
     * Sets an optional initial solution of this linear optimization problem
@@ -55,10 +55,10 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     * @return score of the solution
     */
   def getScore: Double = {
-    if(VectorUtils.allPositive(x)) {
-      score = VectorUtils.dotProduct(lpb.paramC, x)
-      if (x(x.size - 1) > Mepsilon)
-        score = score + x(x.size - 1) * M
+    if(VectorUtils.allPositive(vectX)) {
+      score = VectorUtils.dotProduct(lpb.paramC, vectX)
+      if (vectX(vectX.size - 1) > Mepsilon)
+        score = score + vectX(vectX.size - 1) * M
     }
     else
       score = Double.PositiveInfinity
@@ -78,56 +78,56 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     val p = lpb.paramA.numCols
     var p_tmp = p
 
-    var A_tmp: Array[Double] = null
-    var b_tmp: Array[Double] = null
-    var c_tmp: Array[Double] = null
+    var matA_tmp: Array[Double] = null
+    var vectB_tmp: Array[Double] = null
+    var vectC_tmp: Array[Double] = null
 
     if (lpb.constraintType == ConstraintType.GreaterThan) {
-      /* A = [A eye(n)] */
+      /* matA = [matA eye(n)] */
       val ones = Matrices.diag(new DenseVector(Array.fill(n)(-1.0)))
-      A_tmp = lpb.paramA.toArray ++ ones.toArray
+      matA_tmp = lpb.paramA.toArray ++ ones.toArray
       p_tmp = p_tmp + n
 
       if (!hasInitSol) {
         /* c = [c zeros(n) M] */
-        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ M
-        x = new DenseVector(Array.fill(n+p+1)(1))
+        vectC_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0) :+ M
+        vectX = new DenseVector(Array.fill(n+p+1)(1))
       } else {
         /* c = [c zeros(n)] */
-        c_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
+        vectC_tmp = lpb.paramC.toArray ++ Array.fill[Double](n)(0.0)
         val b_minus_Ax = lpb.paramB.toArray.zip(lpb.paramA.multiply(solution.getVector.toDense).toArray).map(x => x._1 - x._2)
-        x = new DenseVector(solution.getVector.toArray ++ b_minus_Ax)
+        vectX = new DenseVector(solution.getVector.toArray ++ b_minus_Ax)
       }
 
     } else {
       // Constraint is Equal
-      A_tmp = lpb.paramA.toArray
+      matA_tmp = lpb.paramA.toArray
       if (!hasInitSol) {
         /* c = [c M] */
-        c_tmp = lpb.paramC.toArray :+ M
-        x = new DenseVector(Array.fill(p+1)(1))
+        vectC_tmp = lpb.paramC.toArray :+ M
+        vectX = new DenseVector(Array.fill(p+1)(1))
       } else {
         /* c = [c] */
-        c_tmp = lpb.paramC.toArray
-        x = solution.getVector
+        vectC_tmp = lpb.paramC.toArray
+        vectX = solution.getVector
       }
     }
 
     if (!hasInitSol) {
-      /* A = [A, b-A*ones(n,1)] */
-      val A_Matrix = new DenseMatrix(n, p_tmp, A_tmp)
-      b_tmp = lpb.paramB.toArray
-      val b_minus_Aones = b_tmp.zip(A_Matrix.multiply(new DenseVector(Array.fill(p_tmp)(1))).toArray).map(x => x._1 - x._2)
-      A = sc.broadcast(Matrices.horzcat(Array(A_Matrix, Matrices.dense(n, 1, b_minus_Aones))))
+      /* matA = [matA, b-matA*ones(n,1)] */
+      val A_Matrix = new DenseMatrix(n, p_tmp, matA_tmp)
+      vectB_tmp = lpb.paramB.toArray
+      val b_minus_Aones = vectB_tmp.zip(A_Matrix.multiply(new DenseVector(Array.fill(p_tmp)(1))).toArray).map(x => x._1 - x._2)
+      matA = sc.broadcast(Matrices.horzcat(Array(A_Matrix, Matrices.dense(n, 1, b_minus_Aones))))
       /* x = ones(p+1) */
-      x = Vectors.dense(Array.fill(p_tmp + 1)(1.0))
+      vectX = Vectors.dense(Array.fill(p_tmp + 1)(1.0))
     } else {
-      A = sc.broadcast(new DenseMatrix(n, p_tmp, A_tmp))
+      matA = sc.broadcast(new DenseMatrix(n, p_tmp, matA_tmp))
       /* x = ones(p) */
-      x = Vectors.dense(Array.fill(p_tmp)(1.0))
+      vectX = Vectors.dense(Array.fill(p_tmp)(1.0))
     }
-    b = sc.broadcast(lpb.paramB)
-    c = sc.broadcast(new DenseVector(c_tmp))
+    vectB = sc.broadcast(lpb.paramB)
+    vectC = sc.broadcast(new DenseVector(vectC_tmp))
   }
 
 
@@ -138,38 +138,38 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     * @return Tuple (number of iterations to solve the problem, solution found)
     */
   def _solveNIters(maxIter: Int): (Int, Solution) = {
-    val n = A.value.numRows
-    val m = A.value.numCols
+    val n = matA.value.numRows
+    val m = matA.value.numCols
 
     val epsStop = 1e-6
     val eps = 1e-6
     val stepCoef = 0.99
     var iterCount = 0
 
-    val At: DenseMatrix = A.value.transpose.asInstanceOf[DenseMatrix]
+    val matAt: DenseMatrix = matA.value.transpose.asInstanceOf[DenseMatrix]
 
     while (isSolving && iterCount < maxIter) {
       /* X2 = x^2 */
-      val X2 = Vectors.dense((for (i <- 0 until m) yield x(i) * x(i)).toArray)
+      val vectX2 = Vectors.dense((for (i <- 0 until m) yield vectX(i) * vectX(i)).toArray)
       /* AX2 = A * x^2 */
-      val AX2 = MatrixUtils.diagMult(A.value, X2)
+      val matAX2 = MatrixUtils.diagMult(matA.value, vectX2)
       /* ax2at = A * Xk2 * A' */
-      val ax2at = AX2.multiply(At)
+      val matAX2At = matAX2.multiply(matAt)
 
       /*val breezeAx2at = new breeze.linalg.DenseMatrix(ax2at.numRows, ax2at.numCols, ax2at.toArray)
       val breezeAx2c = new breeze.linalg.DenseVector((AX2.multiply(c.value)).toArray)
       val breezeW = breezeAx2at \ breezeAx2c
       val w = new DenseVector(breezeW.toArray)*/
-      val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(ax2at, sc)), AX2.multiply(c.value))
+      val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(matAX2At, sc)), matAX2.multiply(vectC.value))
       if (w == null) {
         println("Descent direction too small, converged.")
         stopSolving()
       }
       else {
-        val Aw = At.multiply(w.asInstanceOf[DenseVector])
-        val r = for (i <- 0 until m) yield c.value(i) - Aw(i)
+        val vectAw = matAt.multiply(w.asInstanceOf[DenseVector])
+        val r = for (i <- 0 until m) yield vectC.value(i) - vectAw(i)
 
-        val dy = Vectors.dense((for (i <- 0 until m) yield -x(i) * r(i)).toArray)
+        val dy = Vectors.dense((for (i <- 0 until m) yield -vectX(i) * r(i)).toArray)
         val norm = Vectors.norm(dy, 2.0)
 
         if (VectorUtils.allPositive(r) && norm <= epsStop) {
@@ -188,13 +188,13 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
           else {
             var minDy = VectorUtils.minValue(dy)
             val step = -stepCoef / minDy
-            x = Vectors.dense((for (i <- 0 until m) yield x(i) + step * x(i) * dy(i)).toArray)
+            vectX = Vectors.dense((for (i <- 0 until m) yield vectX(i) + step * vectX(i) * dy(i)).toArray)
             iterCount += 1
           }
         }
       }
     }
-    solution.setValue(Vectors.dense(x.toArray.slice(0, lpb.paramA.numCols)))
+    solution.setValue(Vectors.dense(vectX.toArray.slice(0, lpb.paramA.numCols)))
     (iterCount, solution)
   }
 }
