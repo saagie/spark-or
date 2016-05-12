@@ -131,32 +131,26 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
     val n = A.value.numRows
     val m = A.value.numCols
 
-    println(A.value)
     val epsStop = 0.000001
     val eps = 0.000001
     val stepCoef = 0.99
     var iterCount = 0
+
+    val At: DenseMatrix = A.value.transpose.asInstanceOf[DenseMatrix]
 
     while (isSolving && iterCount < maxIter) {
       /* X2 = x^2 */
       val X2 = Vectors.dense((for (i <- 0 until m) yield x(i) * x(i)).toArray)
       /* AX2 = A * x^2 */
       val AX2 = MatrixUtils.diagMult(A.value, X2)
-      val At: DenseMatrix = A.value.transpose.asInstanceOf[DenseMatrix]
-      /* mult = A * Xk2 * A' */
+      /* ax2at = A * Xk2 * A' */
       val ax2at = AX2.multiply(At)
 
-      // print
-      println("\nX2 \n" + X2)
-      println("\nAX2 \n" + AX2)
-      println("\nmult \n" + ax2at)
-
-
-      val breezeAx2at = new breeze.linalg.DenseMatrix(ax2at.numRows, ax2at.numCols, ax2at.toArray)
+      /*val breezeAx2at = new breeze.linalg.DenseMatrix(ax2at.numRows, ax2at.numCols, ax2at.toArray)
       val breezeAx2c = new breeze.linalg.DenseVector((AX2.multiply(c.value)).toArray)
       val breezeW = breezeAx2at \ breezeAx2c
-      val w = new DenseVector(breezeW.toArray)
-      //val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(mult, sc)), AX2.multiply(c.value))
+      val w = new DenseVector(breezeW.toArray)*/
+      val w = LinearSystem.solveLinearSystem(new RowMatrix(MatrixUtils.matrixToRDD(ax2at, sc)), AX2.multiply(c.value))
       if (w == null) {
         println("Descent direction too small, converged.")
         stopSolving()

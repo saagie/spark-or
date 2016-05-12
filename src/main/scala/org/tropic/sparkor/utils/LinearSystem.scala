@@ -40,6 +40,7 @@ object LinearSystem {
     val matU = svd.U
     val s = svd.s // The singular values are stored in a local dense vector.
     val matV = svd.V // The V factor is a local dense matrix.
+    //TODO: remove null?
     val result = s.size match {
       case 0 => null
       case _ => {
