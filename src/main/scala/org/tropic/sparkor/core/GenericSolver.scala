@@ -17,7 +17,7 @@ class GenericSolver(_sc: SparkContext = null) extends Solver(_sc) {
     */
   def setProblem(_pb : Problem) = {
     pb = _pb
-    solver = pb.generateDefaultSolver()
+    solver = pb.generateDefaultSolver(sc)
   }
 
   /**

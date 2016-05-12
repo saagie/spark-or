@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @param _sc SparkContext
   */
-class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(_sc) {
+class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
   /**
     * Solution: solution of the problem
     */

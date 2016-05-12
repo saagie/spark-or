@@ -1,5 +1,6 @@
 package org.tropic.sparkor.linprog
 
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.{Matrix, Vector}
 import org.tropic.sparkor.core.{Problem, Solver}
 
@@ -21,6 +22,7 @@ import ConstraintType._
   * min c'x
   * subject to Ax = b (or >=)
   * and x >= 0
+ *
   * @param _paramA n-by-m matrix A
   * @param _paramB vector b with n elements
   * @param _paramC vector c with m elements
@@ -46,9 +48,12 @@ class LinearOptimizationProblem(_paramA: Matrix, _paramB: Vector, _paramC: Vecto
 
   /**
     * Generates a default solver among all the solvers existing for this problem
+ *
     * @return default solver
     */
-  def generateDefaultSolver(): Solver = {
-    new InteriorPointSolver()
+  def generateDefaultSolver(sc: SparkContext): Solver = {
+    val res = new InteriorPointSolver(sc)
+    res.setProblem(this)
+    res
   }
 }
