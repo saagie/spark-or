@@ -184,7 +184,7 @@ class InteriorPointSolver(_sc: SparkContext = null) extends LinearProblemSolver(
         }
       }
     }
-    solution.setValue(x)
+    solution.setValue(Vectors.dense(x.toArray.slice(0, lpb.paramA.numCols)))
     (iterCount, solution)
   }
 }
