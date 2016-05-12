@@ -52,7 +52,7 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
     * @return score of the solution
     */
   def getScore: Double = {
-    score
+    VectorUtils.dotProduct(c.value, x)
   }
 
   /**
@@ -184,7 +184,7 @@ class InteriorPointSolver(_sc: SparkContext) extends LinearProblemSolver(_sc) {
         }
       }
     }
-    solution.setValue(x)
+    solution.setValue(Vectors.dense(x.toArray.slice(0, lpb.paramA.numCols)))
     (iterCount, solution)
   }
 }
