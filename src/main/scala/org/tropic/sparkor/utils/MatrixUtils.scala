@@ -38,17 +38,17 @@ object MatrixUtils {
 
   /**
     * Multiplies a matrix A with a vector which represents a diagonal matrix
-    * @param A matrix
-    * @param d vector with diagonal values of a matrix
+    * @param matA matrix
+    * @param vectD vector with diagonal values of a matrix
     * @return Matrix containing the result of the multiplication
     */
-  def diagMult(A: Matrix, d: Vector): Matrix = {
-    val n = A.numRows
-    val m = A.numCols
+  def diagMult(matA: Matrix, vectD: Vector): Matrix = {
+    val n = matA.numRows
+    val m = matA.numCols
     val resBuf = ArrayBuffer.fill[Double](n * m)(0.0)
     for (row <- 0 until n)
       for (col <- 0 until m)
-        resBuf(row + col * n) = d(col) * A(row, col)
+        resBuf(row + col * n) = vectD(col) * matA(row, col)
     // res = A * d
     Matrices.dense(n, m, resBuf.toArray)
   }

@@ -30,29 +30,29 @@ object VectorUtils {
 
   /**
     * Returns the minimum value in the vector
-    * @param v Vector
+    * @param vectMin Vector
     * @return minimum value of this vector
     */
-  def minValue(v: Vector): Double = {
-    var minVal = v(0)
-    for (i <- 1 until v.size)
-      if (v(i) < minVal)
-        minVal = v(i)
+  def minValue(vectMin: Vector): Double = {
+    var minVal = vectMin(0)
+    for (i <- 1 until vectMin.size)
+      if (vectMin(i) < minVal)
+        minVal = vectMin(i)
     minVal
   }
 
   /**
     * Dot product of two vectors
-    * @param v First vector
-    * @param u Second vector
+    * @param firstVector First vector
+    * @param secondVector Second vector
     * @return product of v and u
     */
-  def dotProduct(v: Vector, u: Vector): Double = {
+  def dotProduct(firstVector: Vector, secondVector: Vector): Double = {
     var sum = 0.0
     //TODO: assert same size?
     //TODO: change with map function
-    for (i <- 0 until v.size)
-      sum += v(i) * u(i)
+    for (i <- 0 until firstVector.size)
+      sum += firstVector(i) * secondVector(i)
     sum
   }
 }
