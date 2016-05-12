@@ -21,8 +21,8 @@ class IntegrationTest extends FlatSpec {
   val scoreExpected = 70
   val iterInterval = 1
   val matA = Matrices.dense(4, 2, Array[Double](8.0, 12.0, 2.0, -1.0, 12.0, 12.0, 1.0, -1.0))
-  val b = Vectors.dense(Array[Double](24, 36, 4, -5))
-  val c = Vectors.dense(Array[Double](30, 20))
+  val vectB = Vectors.dense(Array[Double](24, 36, 4, -5))
+  val vectC = Vectors.dense(Array[Double](30, 20))
 
 
   def solutionFoundCallback(iter: Int, s: Solution, solver: Solver) {
@@ -32,18 +32,18 @@ class IntegrationTest extends FlatSpec {
   }
 
 
-  def solvingStoppedCallback(s: Solution, solver: Solver): Unit = {
+  def solvingStoppedCallback(sol: Solution, solver: Solver): Unit = {
     println("Final solution")
-    println(s.getVector)
+    println(sol.getVector)
     println("Score")
     println(solver.getScore)
-    xExp = s
+    xExp = sol
     score = solver.getScore
   }
 
   " test with Interior point solver: A linear optimization problem with A = [8.0, 12.0 ; 2.0, -1.0 ; 12.0, 12.0 ; 1.0, -1.0 ], b = [24 ; 36 ; 4 ; -5] and c = [30, 20] " should " x = [1 ; 2 ; 8 ; 0 ; 0 ; 2 ; 0] " in  {
     val solver = new InteriorPointSolver(sc)
-    val problem = new LinearOptimizationProblem(matA, b, c, ConstraintType.GreaterThan)
+    val problem = new LinearOptimizationProblem(matA, vectB, vectC, ConstraintType.GreaterThan)
     solver.setProblem(problem)
     solver.setNewSolutionFoundCallback(iterInterval,solutionFoundCallback)
     solver.setSolvingStoppedCallback(solvingStoppedCallback)
@@ -58,7 +58,7 @@ class IntegrationTest extends FlatSpec {
 
 
   " test with generic solver: A linear optimization problem with A = [8.0, 12.0 ; 2.0, -1.0 ; 12.0, 12.0 ; 1.0, -1.0 ], b = [24 ; 36 ; 4 ; -5] and c = [30, 20] " should " x = [1 ; 2 ; 8 ; 0 ; 0 ; 2 ; 0] " in  {
-    val problem = new LinearOptimizationProblem(matA, b, c, ConstraintType.GreaterThan)
+    val problem = new LinearOptimizationProblem(matA, vectB, vectC, ConstraintType.GreaterThan)
     val solver = problem.generateDefaultSolver(sc)
     solver.setNewSolutionFoundCallback(iterInterval,solutionFoundCallback)
     solver.setSolvingStoppedCallback(solvingStoppedCallback)
