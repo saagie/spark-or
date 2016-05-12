@@ -16,7 +16,7 @@ class IntegrationTest extends FlatSpec {
   val conf = new SparkConf().setAppName("Tests").setMaster("local[*]")
   val sc = new SparkContext(conf)
   var xExp : Solution = new Solution()
-  val xThe : Vector = Vectors.dense(1,2)
+  val xThe : Vector = Vectors.dense(1.0,2.0)
   var score : Double = 0
   val scoreExpected = 70
   val iterInterval = 1
@@ -48,12 +48,12 @@ class IntegrationTest extends FlatSpec {
     solver.setNewSolutionFoundCallback(iterInterval,solutionFoundCallback)
     solver.setSolvingStoppedCallback(solvingStoppedCallback)
     solver.solve()
-
+    var error = 0.0
     for ( i <- xThe.toArray.indices) {
-      assert( (xThe.toArray(i) - xExp.getVector.toArray(i))/xThe.toArray(i) < 1e-4)
+      error += (xThe.toArray(i) - xExp.getVector.toArray(i))*(xThe.toArray(i) - xExp.getVector.toArray(i))
     }
-    val scoreExpected = 70
     assert((scoreExpected - score)/scoreExpected < 1e-4)
+    assert(error < 1e-6)
   }
 
 
@@ -63,10 +63,12 @@ class IntegrationTest extends FlatSpec {
     solver.setNewSolutionFoundCallback(iterInterval,solutionFoundCallback)
     solver.setSolvingStoppedCallback(solvingStoppedCallback)
     solver.solve()
+    var error = 0.0
     for ( i <- xThe.toArray.indices) {
-      assert( (xThe.toArray(i) - xExp.getVector.toArray(i))/xThe.toArray(i) < 1e-4)
+      error += (xThe.toArray(i) - xExp.getVector.toArray(i))*(xThe.toArray(i) - xExp.getVector.toArray(i))
     }
     assert((scoreExpected - score)/scoreExpected < 1e-4)
+    assert(error < 1e-6)
   }
 
 
