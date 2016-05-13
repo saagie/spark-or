@@ -1,3 +1,22 @@
+/*
+ *   Spark-OR version 0.0.1
+ *
+ *   Copyright 2016 Saagie
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
+
 package org.tropic.sparkor.core
 
 import org.apache.spark.SparkContext
@@ -40,14 +59,20 @@ abstract class Solver(_sc: SparkContext = null) {
     */
   def solve(): Unit = {
     _initSolving()
-    solvingStartedCallback(this)
+    if(solvingStartedCallback != null)
+      solvingStartedCallback(this)
     var solution: Solution = null
+    var i = 0
+    solving = true
     while(solving) {
       val (nIter, newSolution) = _solveNIters(iterInterval)
+      i += nIter
       solution = newSolution
-      newSolutionFoundCallback(nIter, solution, this)
+      if(newSolutionFoundCallback != null)
+        newSolutionFoundCallback(i, solution, this)
     }
-    solvingStoppedCallback(solution, this)
+    if(solvingStoppedCallback != null)
+      solvingStoppedCallback(solution, this)
   }
 
   /**

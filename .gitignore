@@ -27,3 +27,5 @@ project/boot/
 .history
 .cache
 
+src/main/resources/log4j.properties
+
