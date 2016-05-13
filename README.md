@@ -1,7 +1,8 @@
 # SparkOR
 
-This library has been initiated by INSA Rouen's students for the company Creative Data (https://www.creativedata.fr/).
+SparkOR (Spark Operational Research) is build on Apache Spark (https://github.com/apache/spark) in Scala and aims to solve optimization problems. It uses Spark 1.6.1 and Mllib 1.6.1 to distribute calculations.
 
+This library has been initiated by INSA Rouen's students for the company Saagie (https://www.saagie.com/).
 
 ## Wiki
 The Wiki is accessible [here](https://github.com/saagie/spark-or/wiki).
@@ -11,8 +12,6 @@ In contains a lot of information including :
   * information about how to [contribute](https://github.com/saagie/spark-or/wiki/Contributing).
 
 ## Getting started
-
-SparkOR is build on Apache Spark (https://github.com/apache/spark) in Scala and aims to solve optimization problems. It uses Spark 1.6.1 and Mllib 1.6.1 to distribute calculations.
 
 ### Installation
 
